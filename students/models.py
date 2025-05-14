@@ -1,50 +1,81 @@
+from datetime import timezone
+
+from django.core.validators import RegexValidator
 from django.db import models
-from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 from accounts.models import User
-from dormitories.models import Dormitory
+from dormitories.models import Dormitory, Floor, Room
 from universities.models import University, Faculty
 
 
-class Student(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': User.Role.IS_STUDENT})
-    passport_number = models.CharField(max_length=9, unique=True)
-    father_name = models.CharField(max_length=100)
-    university = models.ForeignKey(University, on_delete=models.SET_NULL, null=True)
-    faculty = models.ForeignKey(Faculty, on_delete=models.SET_NULL, null=True)
-    additional_phone = models.CharField(max_length=15, blank=True, null=True)
-    emergency_contact_name = models.CharField(max_length=100)
-    emergency_contact_phone = models.CharField(max_length=15)
-    discount = models.CharField(max_length=255, blank=True, null=True)
-    social_status = models.CharField(max_length=255, blank=True, null=True)
-    payment_proof = models.FileField(
-        upload_to='payment_proofs/',
-        blank=True,
-        null=True,
-        help_text="To‘lovni tasdiqlovchi hujjat (rasm yoki PDF)"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
+class Province(models.Model):
+    name = models.CharField(max_length=255)
 
     def __str__(self):
-        return f"{self.user.get_full_name()}"
+        return self.name
 
 
-APPLICATION_STATUS = [
-    ('pending', 'Pending'),
-    ('approved', 'Approved'),
-    ('rejected', 'Rejected'),
-    ('cancelled', 'Cancelled'),
-]
+class District(models.Model):
+    name = models.CharField(max_length=255)
+    province = models.ForeignKey(Province, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
+
 
 
 class Application(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'role': User.Role.IS_STUDENT})
-    dormitory = models.ForeignKey(Dormitory, on_delete=models.CASCADE)
-    student_document = models.FileField(upload_to='student_ID/', blank=True, null=True,
-                                        verbose_name="Student's document")
-    status = models.CharField(max_length=10, choices=APPLICATION_STATUS, default='pending')
+    first_name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    middle_name = models.CharField(max_length=255, blank=True, null=True)
+    dormitory = models.ForeignKey(Dormitory, on_delete=models.SET_NULL, null=True)
+    faculty = models.ForeignKey(Faculty, on_delete=models.SET_NULL, null=True)
+    province = models.ForeignKey(Province, on_delete=models.SET_NULL, null=True)
+    district = models.ForeignKey(District, on_delete=models.SET_NULL, null=True)
+    passport_number = models.CharField(max_length=9, unique=True)
+    picture = models.ImageField(upload_to='student_pictures/', blank=True, null=True)
+    phone_number = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        validators=[RegexValidator(regex=r'^\+998\d{9}$')],
+        verbose_name=_('Phone number')
+    )
     submitted_at = models.DateTimeField(auto_now_add=True)
-    reviewed_at = models.DateTimeField(null=True, blank=True)
     comment = models.TextField(blank=True)
 
     def __str__(self):
-        return f"Application by {self.student.get_full_name()} to {self.dormitory.name}"
+        return f"{self.first_name} {self.last_name} {self.dormitory.name}"
+
+
+
+class Student(models.Model):
+    name = models.CharField(max_length=255)
+    last_name = models.CharField(max_length=255)
+    middle_name = models.CharField(max_length=255, blank=True, null=True)
+    application = models.OneToOneField(Application, on_delete=models.SET_NULL, null=True, blank=True, related_name='application')
+    dormitory = models.ForeignKey(Dormitory, on_delete=models.SET_NULL, null=True)
+    faculty = models.ForeignKey(Faculty, on_delete=models.SET_NULL, null=True)
+    direction = models.CharField(max_length=255, blank=True, null=True)
+    province = models.ForeignKey(Province, on_delete=models.SET_NULL, null=True)
+    district = models.ForeignKey(District, on_delete=models.SET_NULL, null=True)
+    floor = models.ForeignKey(Floor, on_delete=models.SET_NULL, null=True)
+    room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True)
+    passport_number = models.CharField(max_length=9, unique=True)
+    picture = models.ImageField(upload_to='student_pictures/', blank=True, null=True)
+    phone_number = models.CharField(
+        max_length=15,
+        blank=True,
+        null=True,
+        validators=[RegexValidator(regex=r'^\+998\d{9}$')],
+        verbose_name=_('Phone number')
+    )
+    emergency_contact_phone = models.CharField(max_length=15)
+    discount = models.CharField(max_length=255, blank=True, null=True)
+    social_status = models.CharField(max_length=255, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} {self.last_name}"

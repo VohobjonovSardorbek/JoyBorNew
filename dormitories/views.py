@@ -51,14 +51,14 @@ class DormitoryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        if user.role != user.Role.IS_SUPERADMIN:
-            raise PermissionDenied("Faqat superadmin yotoqxona yarata oladi.")
+        if user.role == user.Role.IS_STUDENT:
+            raise PermissionDenied("Student yotoqxona yarata olmaydi.")
         serializer.save(admin=user)
 
     def perform_update(self, serializer):
         user = self.request.user
-        if user.role != user.Role.IS_SUPERADMIN:
-            raise PermissionDenied("Faqat superadmin tahrirlashi mumkin.")
+        if user.role != user.Role.IS_ADMIN or serializer.instance.dormitory.admin != user:
+            raise PermissionDenied("Faqat admin tahrirlashi mumkin.")
         serializer.save()
 
     @swagger_auto_schema(tags=['Yotoqxona'])
@@ -71,8 +71,8 @@ class DormitoryViewSet(viewsets.ModelViewSet):
 
     def perform_destroy(self, instance):
         user = self.request.user
-        if user.role != user.Role.IS_SUPERADMIN:
-            raise PermissionDenied("Faqat superadmin o‘chira oladi.")
+        if user.role != user.Role.IS_ADMIN and instance.dormitory.admin == user:
+            raise PermissionDenied("Faqat dormitory admin o'z yotoqxonasida qavat o‘chira oladi.")
         instance.delete()
 
 
@@ -106,8 +106,8 @@ class FloorViewSet(viewsets.ModelViewSet):
             dormitory = serializer.validated_data.get('dormitory')
             if dormitory.admin != user:
                 raise PermissionDenied("Siz faqat o‘z dormitory’ingizga floor qo‘shishingiz mumkin.")
-        elif user.role != user.Role.IS_SUPERADMIN:
-            raise PermissionDenied("Faqat superadmin yoki dormitory admin floor yaratishi mumkin.")
+        else:
+            raise PermissionDenied("Faqat dormitory admin o'z yotoqxonasi uchun floor yaratishi mumkin.")
         serializer.save()
 
     def perform_update(self, serializer):
@@ -116,14 +116,14 @@ class FloorViewSet(viewsets.ModelViewSet):
             dormitory = serializer.validated_data.get('dormitory', serializer.instance.dormitory)
             if dormitory.admin != user:
                 raise PermissionDenied("Siz faqat o‘z dormitory’ingizdagi floor’ni tahrirlay olasiz.")
-        elif user.role != user.Role.IS_SUPERADMIN:
-            raise PermissionDenied("Faqat superadmin yoki dormitory admin floor’ni tahrirlay oladi.")
+        else:
+            raise PermissionDenied("Faqat dormitory admin o'z yotoqxonasidagi floor’ni tahrirlay oladi.")
         serializer.save()
 
     def perform_destroy(self, instance):
         user = self.request.user
-        if user.role != user.Role.IS_SUPERADMIN:
-            raise PermissionDenied("Faqat superadmin floor’ni o‘chira oladi.")
+        if user.role != user.Role.IS_ADMIN and instance.dormitory.admin == user:
+            raise PermissionDenied("Faqat dormtitory admin o'z yotqxanasidan floor’ni o‘chira oladi.")
         instance.delete()
 
     @swagger_auto_schema(tags=['Qavat'])
@@ -152,7 +152,7 @@ class FloorViewSet(viewsets.ModelViewSet):
 
 class RoomViewSet(viewsets.ModelViewSet):
     queryset = Room.objects.select_related('dormitory', 'floor').all()
-    permission_classes = [IsAuthenticated, RoomPermission]
+    permission_classes = [RoomPermission]
 
     def get_serializer_class(self):
         if self.action in ['create', 'update']:
@@ -181,8 +181,8 @@ class RoomViewSet(viewsets.ModelViewSet):
             dormitory = serializer.validated_data.get('dormitory')
             if dormitory.admin != user:
                 raise PermissionDenied("Siz faqat o‘z dormitory’ingizga room qo‘shishingiz mumkin.")
-        elif user.role != user.Role.IS_SUPERADMIN:
-            raise PermissionDenied("Faqat superadmin yoki dormitory admin room yaratishi mumkin.")
+        else:
+            raise PermissionDenied("Faqat dormitory admin room yaratishi mumkin.")
         serializer.save()
 
     def perform_update(self, serializer):
@@ -191,14 +191,14 @@ class RoomViewSet(viewsets.ModelViewSet):
             dormitory = serializer.validated_data.get('dormitory', serializer.instance.dormitory)
             if dormitory.admin != user:
                 raise PermissionDenied("Siz faqat o‘z dormitory’ingizdagi room’ni tahrirlay olasiz.")
-        elif user.role != user.Role.IS_SUPERADMIN:
-            raise PermissionDenied("Faqat superadmin yoki dormitory admin room’ni tahrirlay oladi.")
+        else:
+            raise PermissionDenied("Faqat dormitory admin room’ni tahrirlay oladi.")
         serializer.save()
 
     def perform_destroy(self, instance):
         user = self.request.user
-        if user.role != user.Role.IS_SUPERADMIN:
-            raise PermissionDenied("Faqat superadmin room’ni o‘chira oladi.")
+        if user.role != user.Role.IS_ADMIN and instance.dormitory.admin == user:
+            raise PermissionDenied("Faqat dormitory admin oz yotoqxonasidagi room’ni o‘chira oladi.")
         instance.delete()
 
     @swagger_auto_schema(tags=['Xona'])

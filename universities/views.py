@@ -6,9 +6,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from universities.models import University, Faculty
 from rest_framework import viewsets
-import logging
 
-logger = logging.getLogger(__name__)
 
 
 class UniversityViewSet(viewsets.ModelViewSet):
@@ -18,7 +16,6 @@ class UniversityViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         instance = serializer.save()
-        logger.info(f"{self.request.user} created university: {instance.name}")
 
     @swagger_auto_schema(tags=['Universitet'])
     def list(self, request, *args, **kwargs):
@@ -54,24 +51,18 @@ class FacultyViewSet(viewsets.ModelViewSet):
         """
         Fakultet yaratishda kim tomonidan yaratildi (request.user).
         """
-        instance = serializer.save()
-        logger.info(
-            f"User {self.request.user} created Faculty: {instance.name}, University: {instance.university.name}")
+        instance = serializer.save(dormitory=self.request.user.dormitory)
 
     def perform_update(self, serializer):
         """
         Fakultet yangilanishida kim tomonidan yangilandi (request.user).
         """
         instance = serializer.save()
-        logger.info(
-            f"User {self.request.user} updated Faculty: {instance.name}, University: {instance.university.name}")
 
     def perform_destroy(self, instance):
         """
         Fakultet o'chirishda kim tomonidan o'chirildi (request.user).
         """
-        logger.info(
-            f"User {self.request.user} deleted Faculty: {instance.name}, University: {instance.university.name}")
         instance.delete()
 
     def get_queryset(self):

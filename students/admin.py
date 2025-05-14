@@ -4,9 +4,9 @@ from django.utils import timezone
 
 
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('user', 'passport_number', 'father_name', 'university', 'faculty', 'created_at')
-    list_filter = ('university', 'faculty', 'created_at')
-    search_fields = ('user__full_name', 'passport_number', 'father_name', 'emergency_contact_name')
+    list_display = ('name', 'passport_number', 'middle_name', 'faculty', 'created_at')
+    list_filter = ('faculty', 'created_at')
+    search_fields = ('name', 'passport_number', 'middle_name')
     ordering = ('-created_at',)
     readonly_fields = ('created_at',)
 
@@ -23,26 +23,12 @@ class StudentAdmin(admin.ModelAdmin):
 
 
 class ApplicationAdmin(admin.ModelAdmin):
-    list_display = ('student', 'dormitory', 'status', 'submitted_at', 'reviewed_at', 'comment')
-    list_filter = ('status', 'dormitory', 'submitted_at')
-    search_fields = ('student__full_name', 'dormitory__name')
+    list_display = ('student', 'dormitory', 'submitted_at', 'comment')
+    list_filter = ('dormitory', 'submitted_at')
+    search_fields = ('student__name', 'dormitory__name')
     ordering = ('-submitted_at',)
-    readonly_fields = ('submitted_at', 'reviewed_at')
+    readonly_fields = ('submitted_at',)
 
-    def get_fieldsets(self, request, obj=None):
-        fieldsets = super().get_fieldsets(request, obj)
-        if obj:  # Agar ariza mavjud bo'lsa
-            fieldsets += (
-                ('Review Details', {
-                    'fields': ('status', 'reviewed_at', 'comment')
-                }),
-            )
-        return fieldsets
-
-    def save_model(self, request, obj, form, change):
-        if obj.status == 'approved' and not obj.reviewed_at:
-            obj.reviewed_at = timezone.now()
-        super().save_model(request, obj, form, change)
 
 
 admin.site.register(Student, StudentAdmin)

@@ -3,11 +3,11 @@ from .models import User, UserProfile
 
 
 class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'email', 'role', 'status', 'created_at', 'updated_at')
+    list_display = ('username', 'password', 'email', 'role', 'status', 'created_at', 'updated_at')
     list_filter = ('role', 'status', 'is_staff', 'is_superuser')
     search_fields = ('username', 'email')
     ordering = ('-created_at',)
-    fields = ('username', 'email', 'role', 'status', 'is_staff', 'is_superuser', 'created_at', 'updated_at')
+    fields = ('username','password', 'email', 'role', 'status', 'is_staff', 'is_superuser', 'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
 
     def get_fieldsets(self, request, obj=None):

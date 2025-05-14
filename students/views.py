@@ -1,8 +1,10 @@
 from django.contrib.auth.models import AnonymousUser
+from django.template.context_processors import request
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, permissions, filters
 from rest_framework.permissions import IsAuthenticated
 
+from accounts.permissions import IsDormitoryAdmin
 from .models import Student, Application
 from .serializers import StudentSerializer, ApplicationSerializer
 from .permissions import IsStudentOrAdminForOwnDormitory, IsAdminForDormitory, IsSuperAdminOrOwner
@@ -10,13 +12,13 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 
 class StudentViewSet(viewsets.ModelViewSet):
-    queryset = Student.objects.select_related('user', 'university', 'faculty').all()
+    queryset = Student.objects.select_related('user', 'dormitory', 'faculty').all()
     serializer_class = StudentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsDormitoryAdmin]
 
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['university', 'faculty', 'social_status']
-    search_fields = ['passport_number', 'father_name', 'user__full_name']
+    filterset_fields = ['faculty', 'social_status']
+    search_fields = ['passport_number', 'middle_name', 'name']
     ordering_fields = ['created_at', 'discount']
     ordering = ['-created_at']
 
@@ -40,9 +42,13 @@ class StudentViewSet(viewsets.ModelViewSet):
             return Student.objects.none()
         role = getattr(user, 'role', None)
 
-        if user.is_super_admin or user.is_staff:
-            return self.queryset
+        if user.is_dormitory_admin:
+            return self.queryset.filter(dormitory=user.dormitory)
         return self.queryset.filter(user=user)
+
+    def perform_create(self, serializer):
+        serializer.save(dormitory=self.request.user.dormitory)
+
 
     @swagger_auto_schema(tags=['Student'])
     def list(self, request, *args, **kwargs):
@@ -76,9 +82,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
 
     # Filtirlash, izlash, tartiblash maydonlari
-    filterset_fields = ['status', 'dormitory']
+    filterset_fields = ['dormitory']
     search_fields = ['comment', 'dormitory__name']
-    ordering_fields = ['submitted_at', 'reviewed_at']
+    ordering_fields = ['submitted_at']
     ordering = ['-submitted_at']
 
     def get_queryset(self):
@@ -106,7 +112,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         # Ariza yangilanishi uchun ruxsat
         if self.action in ['update', 'partial_update']:
-            self.permission_classes = [IsSuperAdminOrOwner]
+            self.permission_classes = [IsStudentOrAdminForOwnDormitory]
         else:
             # Ariza ko‘rish uchun ruxsat
             self.permission_classes = [IsStudentOrAdminForOwnDormitory]

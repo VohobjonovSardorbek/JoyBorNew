@@ -20,13 +20,13 @@ from .serializers import (
     PasswordResetConfirmSerializer,
     DormitoryAdminCreateSerializer, UserProfileSerializer,
 )
-from .permissions import CanCreateDormitoryAdmin, IsSelfOrSuperAdmin, IsSuperAdmin
+from .permissions import CanCreateDormitoryAdmin, IsSelfOrSuperAdmin, IsSuperAdmin, IsDormitoryAdmin
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -35,8 +35,8 @@ class UserViewSet(viewsets.ModelViewSet):
             return [CanCreateDormitoryAdmin()]
         elif self.action in ['update', 'partial_update']:
             return [IsSelfOrSuperAdmin()]
-        elif self.action == 'destroy':
-            return [IsSuperAdmin()]
+        elif self.action == ['create', 'destroy']:
+            return [IsDormitoryAdmin()]
         return [permissions.AllowAny()]
 
     def get_serializer_class(self):
@@ -77,12 +77,10 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @swagger_auto_schema(tags=['Foydalanuvchi'])
     def update(self, request, *args, **kwargs):
-        request.data.pop('role', None)
         return super().update(request, *args, **kwargs)
 
     @swagger_auto_schema(tags=['Foydalanuvchi'])
     def partial_update(self, request, *args, **kwargs):
-        request.data.pop('role', None)
         return super().partial_update(request, *args, **kwargs)
 
     @swagger_auto_schema(tags=['Foydalanuvchi amallari'])
