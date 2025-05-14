@@ -1,6 +1,6 @@
 from drf_yasg.utils import swagger_auto_schema
 
-from accounts.permissions import IsAuthenticatedOrSuperAdminOnly
+from accounts.permissions import IsAuthenticatedOrSuperAdminOnly, IsSuperAdmin
 from dormitories.models import Floor
 from .serializers import UniversitySerializer, FacultySerializer
 from rest_framework import status
@@ -12,7 +12,7 @@ from rest_framework import viewsets
 class UniversityViewSet(viewsets.ModelViewSet):
     queryset = University.objects.all().order_by('name')
     serializer_class = UniversitySerializer
-    permission_classes = [IsAuthenticatedOrSuperAdminOnly]
+    permission_classes = [IsSuperAdmin]
 
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
@@ -21,6 +21,7 @@ class UniversityViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         instance = serializer.save()
+        instance.save()
 
     @swagger_auto_schema(tags=['Universitet'])
     def list(self, request, *args, **kwargs):
@@ -50,7 +51,7 @@ class UniversityViewSet(viewsets.ModelViewSet):
 class FacultyViewSet(viewsets.ModelViewSet):
     queryset = Faculty.objects.all().order_by('name')
     serializer_class = FacultySerializer
-    permission_classes = [IsAuthenticatedOrSuperAdminOnly]
+    permission_classes = [IsSuperAdmin]
 
     def perform_create(self, serializer):
         """
