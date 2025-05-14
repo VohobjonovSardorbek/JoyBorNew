@@ -51,8 +51,8 @@ class DormitoryViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        if user.role == user.Role.IS_STUDENT:
-            raise PermissionDenied("Student yotoqxona yarata olmaydi.")
+        if user.role == user.Role.IS_STUDENT or user.role == user.Role.IS_SUPERADMIN:
+            raise PermissionDenied("Faqat admin  yotoqxona yarata oladi.")
         serializer.save(admin=user)
 
     def perform_update(self, serializer):

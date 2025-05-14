@@ -1,6 +1,7 @@
 from drf_yasg.utils import swagger_auto_schema
 
 from accounts.permissions import IsAuthenticatedOrSuperAdminOnly
+from dormitories.models import Floor
 from .serializers import UniversitySerializer, FacultySerializer
 from rest_framework import status
 from rest_framework.response import Response
@@ -8,11 +9,15 @@ from universities.models import University, Faculty
 from rest_framework import viewsets
 
 
-
 class UniversityViewSet(viewsets.ModelViewSet):
     queryset = University.objects.all().order_by('name')
     serializer_class = UniversitySerializer
     permission_classes = [IsAuthenticatedOrSuperAdminOnly]
+
+    def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return University.objects.none()
+        return University.objects.all()
 
     def perform_create(self, serializer):
         instance = serializer.save()
@@ -66,10 +71,12 @@ class FacultyViewSet(viewsets.ModelViewSet):
         instance.delete()
 
     def get_queryset(self):
-        """
-        Fakultetlar ro'yxatini olishda maxsus filtr qo'shish.
-        """
+
         queryset = super().get_queryset()
+
+        if getattr(self, 'swagger_fake_view', False):
+            return Faculty.objects.none()
+
         university = self.request.query_params.get('university')
         if university:
             queryset = queryset.filter(university__id=university)
