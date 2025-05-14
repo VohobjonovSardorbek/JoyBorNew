@@ -1,35 +1,35 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils.translation import gettext_lazy as _
 from .models import User, UserProfile
 
 
-class UserAdmin(admin.ModelAdmin):
-    list_display = ('username', 'password', 'email', 'role', 'status', 'created_at', 'updated_at')
+@admin.register(User)
+class UserAdmin(BaseUserAdmin):
+    model = User
+    list_display = ('username', 'email', 'role', 'status', 'is_staff', 'is_superuser', 'created_at')
     list_filter = ('role', 'status', 'is_staff', 'is_superuser')
     search_fields = ('username', 'email')
     ordering = ('-created_at',)
-    fields = ('username','password', 'email', 'role', 'status', 'is_staff', 'is_superuser', 'created_at', 'updated_at')
+
+    fieldsets = (
+        (None, {'fields': ('username', 'email', 'password')}),
+        (_('Personal info'), {'fields': ()}),
+        (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        (_('Important dates'), {'fields': ('last_login', 'date_joined', 'created_at', 'updated_at')}),
+        (_('Extra info'), {'fields': ('role', 'status', 'reset_password_token', 'reset_password_token_expires')}),
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('username', 'email', 'password1', 'password2', 'role', 'status'),
+        }),
+    )
     readonly_fields = ('created_at', 'updated_at')
 
-    def get_fieldsets(self, request, obj=None):
-        fieldsets = super().get_fieldsets(request, obj)
-        if obj:  # Agar foydalanuvchi mavjud bo'lsa
-            fieldsets += (
-                ('Password reset', {
-                    'fields': ('reset_password_token', 'reset_password_token_expires')
-                }),
-            )
-        return fieldsets
 
-
+@admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'phone_number', 'profile_picture', 'created_at', 'updated_at')
     search_fields = ('user__username', 'user__email', 'phone_number')
     readonly_fields = ('created_at', 'updated_at')
-
-    def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        return queryset.select_related('user')  # Boshqa so'rovlar bilan birga user ma'lumotlarini olish
-
-
-admin.site.register(User, UserAdmin)
-admin.site.register(UserProfile, UserProfileAdmin)

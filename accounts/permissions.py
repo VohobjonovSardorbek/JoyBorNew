@@ -7,7 +7,7 @@ class IsSuperAdmin(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        return request.user and request.user.is_super_admin
+        return getattr(request.user, 'is_super_admin', False)
 
 
 class IsDormitoryAdmin(permissions.BasePermission):
@@ -16,7 +16,7 @@ class IsDormitoryAdmin(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        return request.user and request.user.is_dormitory_admin
+        return getattr(request.user, 'is_dormitory_admin', False)
 
 
 class IsStudent(permissions.BasePermission):
@@ -26,7 +26,7 @@ class IsStudent(permissions.BasePermission):
         if not request.user.is_authenticated:
             return False
 
-        return request.user and request.user.is_student
+        return getattr(request.user, 'is_student', False)
 
 
 class IsAuthenticatedOrSuperAdminOnly(permissions.BasePermission):
@@ -37,9 +37,9 @@ class IsAuthenticatedOrSuperAdminOnly(permissions.BasePermission):
             return False
 
         if request.method in permissions.SAFE_METHODS:
-            return request.user and request.user.is_authenticated
+            return request.user.is_authenticated
 
-        return request.user and request.user.is_super_admin
+        return request.user.is_super_admin
 
 
 class CanCreateDormitoryAdmin(permissions.BasePermission):
@@ -63,6 +63,6 @@ class IsSelfOrSuperAdmin(permissions.BasePermission):
             return False
 
         # Allow the owner of the profile or superadmin to edit the profile
-        return obj.user == request.user or request.user.is_super_admin
+        return getattr(obj, 'user', None) == request.user or request.user.is_super_admin
 
 

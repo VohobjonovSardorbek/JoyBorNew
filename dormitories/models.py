@@ -19,7 +19,7 @@ class Dormitory(models.Model):
     number_of_floors = models.PositiveIntegerField()
     description = models.TextField(blank=True)
     admin = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True,
-                                 related_name='director_dormitories',
+                                 related_name='dormitory',
                                  verbose_name=_('Admin'))
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='active', verbose_name=_('Status'))
     contact_info = models.TextField(blank=True, null=True, verbose_name=_('Contact information'))

@@ -10,7 +10,7 @@ class DormitoryPermission(permissions.BasePermission):
         if not user.is_authenticated:
             return False
 
-        if user.role == user.Role.IS_SUPERADMIN or user.role == user.Role.IS_ADMIN:
+        if user.role == user.Role.IS_ADMIN:
             return True
 
         if view.action in ['list', 'retrieve']:
@@ -21,7 +21,10 @@ class DormitoryPermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         user = request.user
 
-        if user.role == user.Role.IS_SUPERADMIN or user.role == user.Role.IS_ADMIN:
+        if not user.is_authenticated:
+            return False
+
+        if user.role == user.Role.IS_ADMIN:
             return True
 
         if user.role == user.Role.IS_ADMIN:
@@ -48,7 +51,7 @@ class FloorPermission(permissions.BasePermission):
         if not user.is_authenticated:
             return False
 
-        if user.role == user.Role.IS_SUPERADMIN or user.role == user.Role.IS_ADMIN:
+        if user.role == user.Role.IS_ADMIN:
             return True
 
         if user.role == user.Role.IS_STUDENT:

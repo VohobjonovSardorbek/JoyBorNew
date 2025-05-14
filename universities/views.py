@@ -57,7 +57,7 @@ class FacultyViewSet(viewsets.ModelViewSet):
         """
         Fakultet yaratishda kim tomonidan yaratildi (request.user).
         """
-        instance = serializer.save(dormitory=self.request.user.dormitory)
+        instance = serializer.save()
 
     def perform_update(self, serializer):
         """

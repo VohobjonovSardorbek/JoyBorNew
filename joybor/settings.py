@@ -72,13 +72,13 @@ SWAGGER_SETTINGS = {
 
 from datetime import timedelta
 
-REST_FRAMEWORK_SIMPLEJWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),  # Token amal qilish muddati
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=100),  # Refresh token amal qilish muddati
-    'ROTATE_REFRESH_TOKENS': False,  # Refresh tokenlarni yangilash
-    'BLACKLIST_AFTER_ROTATION': True,  # Token yangilanganidan keyin uni qora ro'yxatga olish
-    'ALGORITHM': 'HS256',  # Shifrlash algoritmi
-    'SIGNING_KEY': 'your-secret-key',  # Tokenni imzolash uchun maxfiy kalit
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=100),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,  # yoki settings.py dagi SECRET_KEY
 }
 
 SWAGGER_SETTINGS = {
@@ -91,6 +91,15 @@ SWAGGER_SETTINGS = {
         }
     },
 }
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 4,
+        }
+    },
+]
 
 LOGGING = {
     'version': 1,
@@ -153,20 +162,6 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
-]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/

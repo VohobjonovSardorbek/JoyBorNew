@@ -1,6 +1,7 @@
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied, AuthenticationFailed
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -35,22 +36,23 @@ class UserViewSet(viewsets.ModelViewSet):
             return [CanCreateDormitoryAdmin()]
         elif self.action in ['update', 'partial_update']:
             return [IsSelfOrSuperAdmin()]
-        elif self.action == ['create', 'destroy']:
-            return [IsDormitoryAdmin()]
+        elif self.action in ['create', 'destroy']:
+            return [IsSuperAdmin()]
         return [permissions.AllowAny()]
 
     def get_serializer_class(self):
-        if self.action == 'register':
+        action = self.action
+        if action == 'register':
             return UserRegistrationSerializer
-        elif self.action == 'create_dormitory_admin':
+        elif action == 'create_dormitory_admin':
             return DormitoryAdminCreateSerializer
-        elif self.action == 'login':
+        elif action == 'login':
             return UserLoginSerializer
-        elif self.action == 'reset_password_request':
+        elif action == 'reset_password_request':
             return PasswordResetRequestSerializer
-        elif self.action == 'change_password':
+        elif action == 'change_password':
             return PasswordChangeSerializer
-        elif self.action == 'reset_password_confirm':
+        elif action == 'reset_password_confirm':
             return PasswordResetConfirmSerializer
         return UserSerializer
 
@@ -116,17 +118,27 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @swagger_auto_schema(tags=['Foydalanuvchi amallari'])
+    @swagger_auto_schema(tags=['Foydalanuvchi amallari'], permission_classes=[IsAuthenticated])
     @action(detail=False, methods=['post'])
     def change_password(self, request):
+        if not request.user.is_authenticated:
+            raise AuthenticationFailed("Foydalanuvchi tizimga kirgan emas.")
+
         serializer = self.get_serializer(data=request.data)
+
         if serializer.is_valid():
             user = request.user
+
+            # Eski parolni tekshirish
             if not user.check_password(serializer.validated_data['old_password']):
-                return Response({'error': 'Wrong password'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Noto‘g‘ri eski parol'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Yangi parolni o‘rnatish
             user.set_password(serializer.validated_data['new_password'])
             user.save()
-            return Response({'status': 'Password changed successfully'})
+
+            return Response({'status': 'Parol muvaffaqiyatli o‘zgartirildi'}, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @swagger_auto_schema(tags=['Foydalanuvchi amallari'])
@@ -158,7 +170,7 @@ class UserViewSet(viewsets.ModelViewSet):
     @swagger_auto_schema(tags=['Foydalanuvchi amallari'])
     @action(detail=False, methods=['post'], url_path='reset-password-confirm/(?P<token>[^/.]+)',
             permission_classes=[AllowAny])
-    def reset_passwprd_confirm(self, request, token=None):
+    def reset_password_confirm(self, request, token=None):
         try:
             # Token orqali foydalanuvchini topish
             user = User.objects.get(
@@ -185,6 +197,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
         except User.DoesNotExist:
             return Response({'error': 'Invalid or expired token'}, status=status.HTTP_400_BAD_REQUEST)
+
     @swagger_auto_schema(tags=['Foydalanuvchi amallari'])
     @action(detail=False, methods=['post'], permission_classes=[IsSuperAdmin])
     def create_dormitory_admin(self, request):
