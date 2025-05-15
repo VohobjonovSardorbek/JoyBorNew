@@ -54,7 +54,7 @@ class FloorPermission(permissions.BasePermission):
         if user.role == user.Role.IS_ADMIN:
             return True
 
-        if user.role == user.Role.IS_STUDENT:
+        if user.role == user.Role.IS_STUDENT or user.role == user.Role.IS_SUPERADMIN:
             if view.action in ['list', 'retrieve']:
                 return True
             return False
